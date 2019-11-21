@@ -2,6 +2,7 @@ import os
 import lzma
 import bz2
 import zlib
+import json
 from functools import partial
 
 BZ2 = partial(bz2.BZ2Compressor)
@@ -40,12 +41,18 @@ def information_distance(filename_a, filename_b):
     return (comb_comp_len - min_comp_len) / max_comp_len
 
 
-list_ = []
-for filename in os.listdir("rust/anagram"):
-    dist = information_distance(
-        "rust/anagram/e6044fb7ce864beb9df2641ee43bbf05.tar", "rust/anagram/" + filename
-    )
-    list_.append((dist, filename))
+def main(dir_):
+    total = {}
+    for idx, file_i in enumerate(os.listdir(dir_)):
+        file_distances = {}
+        for file_j in os.listdir(dir_):
+            dist = information_distance(
+                os.path.join(dir_, file_i) , os.path.join(dir_, file_j)
+            )
+            file_distances[file_j] = dist
+        total[file_i] = file_distances
+        print(idx)
+    with open('info.json', 'w') as fp:
+        json.dump(total, fp)
 
-list_.sort()
-print("\n".join([str(i) for i in list_]))
+main('anagram2')

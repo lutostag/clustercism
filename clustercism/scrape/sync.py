@@ -15,9 +15,7 @@ IGNORES = [".gitignore", "Cargo.toml", "README.md", "tests/anagram.rs"]
 
 @retry(stop=stop_after_attempt(7))
 def http_get(*args, **kwargs):
-    r = requests.get(*args, **kwargs)
-    r.raise_for_status()
-    return r
+    return requests.get(*args, **kwargs)
 
 
 class Solutions:
@@ -36,6 +34,7 @@ class Solutions:
 
     def pages(self):
         r = http_get(self.base_url)
+        r.raise_for_status()
         yield r
 
         pages = (int(p) for p in PAGE_REGEX.findall(r.text))
@@ -45,6 +44,7 @@ class Solutions:
 
 class Solution:
     def __init__(self, uuid):
+        print(uuid)
         self.uuid = uuid
 
     def files(self):
@@ -60,6 +60,8 @@ class Solution:
             if filename in IGNORES:
                 continue
             r = http_get(base_url + filename, headers=headers)
+            if r.status_code == 404:
+                continue
             yield (filename, r.content)
 
     def create_tar(self):
@@ -70,7 +72,7 @@ class Solution:
                 tar.addfile(info, io.BytesIO(content))
 
 
-Solutions("rust", "anagram").download_all()
+# Solutions("rust", "anagram").download_all()
 # SOLUTION = "1191813d448a4d31ba68aed31b34f29a"
 # Solution(SOLUTION).create_tar()
 # for file_ in Solution(SOLUTION).files():
