@@ -3,6 +3,7 @@ import lzma
 import bz2
 import zlib
 import json
+import shutil
 from functools import partial
 
 BZ2 = partial(bz2.BZ2Compressor)
@@ -42,17 +43,29 @@ def information_distance(filename_a, filename_b):
 
 
 def main(dir_):
-    total = {}
-    for idx, file_i in enumerate(os.listdir(dir_)):
+    files = set(os.listdir(dir_))
+    try:
+        with open("info.json", "r") as fd:
+            total = json.load(fd)
+            already_processed = set(total.keys())
+            files -= already_processed
+    except FileNotFoundError:
+        total = {}
+
+    print(f"{len(files)} left to process")
+
+    for idx, file_i in enumerate(files):
         file_distances = {}
         for file_j in os.listdir(dir_):
             dist = information_distance(
-                os.path.join(dir_, file_i) , os.path.join(dir_, file_j)
+                os.path.join(dir_, file_i), os.path.join(dir_, file_j)
             )
             file_distances[file_j] = dist
         total[file_i] = file_distances
-        print(idx)
-    with open('info.json', 'w') as fp:
-        json.dump(total, fp)
+        print(f"{idx}/{len(files)}")
+        with open("info.json-new", "w") as fp:
+            json.dump(total, fp)
+        shutil.move("info.json-new", "info.json")
 
-main('anagram2')
+
+main("anagram2")
